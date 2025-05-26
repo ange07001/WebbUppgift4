@@ -1,0 +1,271 @@
+---
+import { pathHasLocale } from "astro:i18n";
+
+const API_KEY = import.meta.env.PUBLIC_OPENWEATHER_API_KEY;
+
+// 5-day forecast
+const forecastResponse = await fetch(
+    `https://api.openweathermap.org/data/2.5/forecast?q=växjö&units=metric&appid=${API_KEY}`,
+);
+const forecastData = await forecastResponse.json();
+
+const forecastDates: string[] = [];
+const forecastTemps: number[] = [];
+const forecastRain: number[] = [];
+const forecastPressure: number[] = [];
+
+forecastData.list.forEach(
+    (item: {
+        dt: number;
+        main: { temp: number, pressure: number };
+        rain: { "3h": number}
+    }) => {
+        const date = new Date(item.dt * 1000);
+
+        const formattedDate =
+            date.toLocaleDateString("en-GB", {
+                weekday: "short",
+                day: "numeric",
+            }) +
+            " " +
+            date.toLocaleTimeString("en-GB", {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+
+        const rainAmount = item.rain?.["3h"] ?? 0;
+
+        forecastDates.push(formattedDate);
+        forecastTemps.push(item.main.temp);
+        forecastPressure.push(item.main.pressure);
+        forecastRain.push(rainAmount);
+        
+        
+    },
+);
+
+---
+
+    <div style="height: 500px;" class="px-6">
+        <canvas id="tempChart"></canvas>
+    </div>
+
+    <div id="forecast-dates" style="display: none;">
+        {JSON.stringify(forecastDates)}
+    </div>
+    <div id="forecast-temps" style="display: none;">
+        {JSON.stringify(forecastTemps)}
+    </div>
+
+    <hr>
+
+    <div class="px-6" style="height: 500px;" >
+        <canvas id="rainChart"></canvas>
+    </div>
+
+    <div id="forecast-rain" style="display: none;">
+        {JSON.stringify(forecastRain)}
+    </div>
+
+    <hr>
+
+    <div class="px-6" style="height: 500px;">
+        <canvas id="pressureChart"></canvas>
+    </div>
+
+    <div id="forecast-pressure" style="display: none;">
+        {JSON.stringify(forecastPressure)}
+    </div>
+
+<script>
+    import Chart from "chart.js/auto";
+
+    const forecastDates = JSON.parse(
+        document.getElementById("forecast-dates")!.textContent || "[]",
+    );
+    const forecastTemps = JSON.parse(
+        document.getElementById("forecast-temps")!.textContent || "[]",
+    );
+
+    const forecastRain = JSON.parse(
+        document.getElementById("forecast-rain")!.textContent || "[]"
+    );
+
+    const forecastPressure = JSON.parse(
+        document.getElementById("forecast-pressure")!.textContent || "[]"
+    )
+
+    console.log(forecastRain);
+
+    const tempCtx = document.getElementById("tempChart") as HTMLCanvasElement;
+
+    new Chart(tempCtx, {
+        type: "line",
+        data: {
+            labels: forecastDates,
+            datasets: [
+                {
+                    label: "Temperature (°C)",
+                    data: forecastTemps,
+                    borderWidth: 1,
+                    tension: 0.4,
+                    fill: { target: "origin", above: "rgba(163, 0, 217, 0.4)" },
+                    borderColor: "rgb(163, 0, 217)",
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: "Temperature (°C)",
+                    },
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: "Date & Time",
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                    },
+                },
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text:
+                        "5-Day Temperature Forecast for " +
+                        document.querySelector("h1")!.textContent,
+                },
+                tooltip: {
+                    callbacks: {
+                        title: (context) => {
+                            return context[0].label;
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    const rainCtx = document.getElementById("rainChart") as HTMLCanvasElement;
+
+    new Chart(rainCtx, {
+        type: "line",
+        data: {
+            labels: forecastDates,
+            datasets: [
+                {
+                    label: "Rain (mm)",
+                    data: forecastRain,
+                    borderWidth: 1,
+                    tension: 0.4,
+                    fill: { target: "origin", above: "rgba(163, 0, 217, 0.4)" },
+                    borderColor: "rgb(163, 0, 217)",
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: "Rain (mm)",
+                    },
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: "Date & Time",
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                    },
+                },
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text:
+                        "5-Day Rain Forecast for " +
+                        document.querySelector("h1")!.textContent,
+                },
+                tooltip: {
+                    callbacks: {
+                        title: (context) => {
+                            return context[0].label;
+                        },
+                    },
+                },
+            },
+        },
+    });
+
+    const pressureCtx = document.getElementById("pressureChart") as HTMLCanvasElement
+
+    new Chart(pressureCtx, {
+        type: "line",
+        data: {
+            labels: forecastDates,
+            datasets: [
+                {
+                    label: "Pressure (hPa)",
+                    data: forecastPressure,
+                    borderWidth: 1,
+                    tension: 0.4,
+                    fill: { target: "origin", above: "rgba(163, 0, 217, 0.4)" },
+                    borderColor: "rgb(163, 0, 217)",
+                },
+            ],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: "Pressure (hPa)",
+                    },
+                },
+                x: {
+                    title: {
+                        display: true,
+                        text: "Date & Time",
+                    },
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45,
+                    },
+                },
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text:
+                        "5-Day Air Pressure Forecast for " +
+                        document.querySelector("h1")!.textContent,
+                },
+                tooltip: {
+                    callbacks: {
+                        title: (context) => {
+                            return context[0].label;
+                        },
+                    },
+                },
+            },
+        },
+    });
+</script>
+
