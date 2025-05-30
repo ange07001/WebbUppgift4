@@ -1,6 +1,4 @@
 ---
-import { pathHasLocale } from "astro:i18n";
-
 const API_KEY = import.meta.env.PUBLIC_OPENWEATHER_API_KEY;
 
 // 5-day forecast
@@ -17,8 +15,8 @@ const forecastPressure: number[] = [];
 forecastData.list.forEach(
     (item: {
         dt: number;
-        main: { temp: number, pressure: number };
-        rain: { "3h": number}
+        main: { temp: number; pressure: number };
+        rain: { "3h": number };
     }) => {
         const date = new Date(item.dt * 1000);
 
@@ -30,7 +28,7 @@ forecastData.list.forEach(
             " " +
             date.toLocaleTimeString("en-GB", {
                 hour: "2-digit",
-                minute: "2-digit"
+                minute: "2-digit",
             });
 
         const rainAmount = item.rain?.["3h"] ?? 0;
@@ -39,63 +37,38 @@ forecastData.list.forEach(
         forecastTemps.push(item.main.temp);
         forecastPressure.push(item.main.pressure);
         forecastRain.push(rainAmount);
-        
-        
     },
 );
-
 ---
 
+<div
+    id="charts-container"
+    data-forecast-dates={JSON.stringify(forecastDates)}
+    data-forecast-temps={JSON.stringify(forecastTemps)}
+    data-forecast-rain={JSON.stringify(forecastRain)}
+    data-forecast-pressure={JSON.stringify(forecastPressure)}
+>
     <div style="height: 500px;" class="px-6">
         <canvas id="tempChart"></canvas>
     </div>
 
-    <div id="forecast-dates" style="display: none;">
-        {JSON.stringify(forecastDates)}
-    </div>
-    <div id="forecast-temps" style="display: none;">
-        {JSON.stringify(forecastTemps)}
-    </div>
-
-    <hr>
-
-    <div class="px-6" style="height: 500px;" >
+    <div style="height: 500px;">
         <canvas id="rainChart"></canvas>
     </div>
 
-    <div id="forecast-rain" style="display: none;">
-        {JSON.stringify(forecastRain)}
-    </div>
-
-    <hr>
-
-    <div class="px-6" style="height: 500px;">
+    <div style="height: 500px;">
         <canvas id="pressureChart"></canvas>
     </div>
-
-    <div id="forecast-pressure" style="display: none;">
-        {JSON.stringify(forecastPressure)}
-    </div>
+</div>
 
 <script>
     import Chart from "chart.js/auto";
 
-    const forecastDates = JSON.parse(
-        document.getElementById("forecast-dates")!.textContent || "[]",
-    );
-    const forecastTemps = JSON.parse(
-        document.getElementById("forecast-temps")!.textContent || "[]",
-    );
-
-    const forecastRain = JSON.parse(
-        document.getElementById("forecast-rain")!.textContent || "[]"
-    );
-
-    const forecastPressure = JSON.parse(
-        document.getElementById("forecast-pressure")!.textContent || "[]"
-    )
-
-    console.log(forecastRain);
+    const container = document.getElementById("charts-container")!;
+    const forecastDates = JSON.parse(container.dataset.forecastDates!);
+    const forecastTemps = JSON.parse(container.dataset.forecastTemps!);
+    const forecastRain = JSON.parse(container.dataset.forecastRain!);
+    const forecastPressure = JSON.parse(container.dataset.forecastPressure!);
 
     const tempCtx = document.getElementById("tempChart") as HTMLCanvasElement;
 
@@ -211,7 +184,9 @@ forecastData.list.forEach(
         },
     });
 
-    const pressureCtx = document.getElementById("pressureChart") as HTMLCanvasElement
+    const pressureCtx = document.getElementById(
+        "pressureChart",
+    ) as HTMLCanvasElement;
 
     new Chart(pressureCtx, {
         type: "line",
@@ -268,4 +243,3 @@ forecastData.list.forEach(
         },
     });
 </script>
-
