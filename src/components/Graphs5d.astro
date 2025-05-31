@@ -1,62 +1,70 @@
 ---
 const API_KEY = import.meta.env.PUBLIC_OPENWEATHER_API_KEY;
 
+const url = Astro.url;
+let cityQuery = url.searchParams.get("city") ?? "vaxjo";
+
 // 5-day forecast
 const forecastResponse = await fetch(
-    `https://api.openweathermap.org/data/2.5/forecast?q=växjö&units=metric&appid=${API_KEY}`,
+    `https://api.openweathermap.org/data/2.5/forecast?q=${cityQuery}&units=metric&appid=${API_KEY}`,
 );
-const forecastData = await forecastResponse.json();
 
 const forecastDates: string[] = [];
 const forecastTemps: number[] = [];
 const forecastRain: number[] = [];
 const forecastPressure: number[] = [];
 
-forecastData.list.forEach(
-    (item: {
-        dt: number;
-        main: { temp: number; pressure: number };
-        rain: { "3h": number };
-    }) => {
-        const date = new Date(item.dt * 1000);
+if (forecastResponse.ok){
+    const forecastData = await forecastResponse.json();
 
-        const formattedDate =
-            date.toLocaleDateString("en-GB", {
-                weekday: "short",
-                day: "numeric",
-            }) +
-            " " +
-            date.toLocaleTimeString("en-GB", {
-                hour: "2-digit",
-                minute: "2-digit",
-            });
 
-        const rainAmount = item.rain?.["3h"] ?? 0;
 
-        forecastDates.push(formattedDate);
-        forecastTemps.push(item.main.temp);
-        forecastPressure.push(item.main.pressure);
-        forecastRain.push(rainAmount);
-    },
-);
+    forecastData.list.forEach(
+        (item: {
+            dt: number;
+            main: { temp: number; pressure: number };
+            rain: { "3h": number };
+        }) => {
+            const date = new Date(item.dt * 1000);
+
+            const formattedDate =
+                date.toLocaleDateString("en-GB", {
+                    weekday: "short",
+                    day: "numeric",
+                }) +
+                " " +
+                date.toLocaleTimeString("en-GB", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                });
+
+            const rainAmount = item.rain?.["3h"] ?? 0;
+
+            forecastDates.push(formattedDate);
+            forecastTemps.push(item.main.temp);
+            forecastPressure.push(item.main.pressure);
+            forecastRain.push(rainAmount);
+        },
+    );
+}
 ---
 
-<div
+<div class="container"
     id="charts-container"
     data-forecast-dates={JSON.stringify(forecastDates)}
     data-forecast-temps={JSON.stringify(forecastTemps)}
     data-forecast-rain={JSON.stringify(forecastRain)}
     data-forecast-pressure={JSON.stringify(forecastPressure)}
 >
-    <div style="height: 500px;" class="px-6">
+    <div style="height: 500px;" class="px-2">
         <canvas id="tempChart"></canvas>
     </div>
 
-    <div style="height: 500px;">
+    <div style="height: 500px;" class="px-2">
         <canvas id="rainChart"></canvas>
     </div>
 
-    <div style="height: 500px;">
+    <div style="height: 500px;" class="px-2">
         <canvas id="pressureChart"></canvas>
     </div>
 </div>
@@ -72,6 +80,12 @@ forecastData.list.forEach(
 
     const tempCtx = document.getElementById("tempChart") as HTMLCanvasElement;
 
+
+    const borderColor = "rgb(158, 98, 255)"
+    const fillAboveColor = "rgba(158, 98, 255, 0.4)"
+
+
+
     new Chart(tempCtx, {
         type: "line",
         data: {
@@ -82,8 +96,8 @@ forecastData.list.forEach(
                     data: forecastTemps,
                     borderWidth: 1,
                     tension: 0.4,
-                    fill: { target: "origin", above: "rgba(163, 0, 217, 0.4)" },
-                    borderColor: "rgb(163, 0, 217)",
+                    fill: { target: "origin", above: fillAboveColor },
+                    borderColor: borderColor,
                 },
             ],
         },
@@ -139,8 +153,8 @@ forecastData.list.forEach(
                     data: forecastRain,
                     borderWidth: 1,
                     tension: 0.4,
-                    fill: { target: "origin", above: "rgba(163, 0, 217, 0.4)" },
-                    borderColor: "rgb(163, 0, 217)",
+                    fill: { target: "origin", above: fillAboveColor },
+                    borderColor: borderColor,
                 },
             ],
         },
@@ -198,8 +212,8 @@ forecastData.list.forEach(
                     data: forecastPressure,
                     borderWidth: 1,
                     tension: 0.4,
-                    fill: { target: "origin", above: "rgba(163, 0, 217, 0.4)" },
-                    borderColor: "rgb(163, 0, 217)",
+                    fill: { target: "origin", above: fillAboveColor },
+                    borderColor: borderColor,
                 },
             ],
         },

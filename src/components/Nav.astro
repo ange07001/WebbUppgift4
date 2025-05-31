@@ -1,5 +1,11 @@
 ---
 import Logo from '../assets/logo.png'
+
+interface Props {
+    showSearch?: boolean;
+}
+
+const {showSearch = false} = Astro.props;
 ---
 
 <nav class="navbar has-shadow">
@@ -18,6 +24,21 @@ import Logo from '../assets/logo.png'
         <div class="navbar-start">
             <a class="navbar-item" href="/about">About</a>
             <a class="navbar-item" href="/contact">Contact</a>
+
+            {showSearch && (
+                <div class="navbar-item">
+                    <div class="field has-addons">
+                        <div class="control">
+                            <input class="input" type="text" placeholder="Search for city" id="city-search">
+                        </div>
+                        <div class="control">
+                            <button class="button is-primary" id="search-button">
+                                <i class="material-icons">search</i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
         <div class="navbar-end">
             <div class="navbar-item">
@@ -180,6 +201,26 @@ import Logo from '../assets/logo.png'
     newsModalBackground?.addEventListener("click", () => {
         newsModal?.classList.remove("is-active");
     });
+
+    // Search functionality
+    const searchInput = document.getElementById("city-search");
+    const searchButton = document.getElementById("search-button");
+
+    if (searchInput && searchButton) {
+        function performSearch() {
+            const query = (searchInput as HTMLInputElement)?.value;
+            if (query) {
+                window.location.href = `/?city=${encodeURIComponent(query)}`;
+            }
+        }
+
+        searchButton.addEventListener("click", performSearch);
+        searchInput.addEventListener("keypress", (e) => {
+            if(e.key === "Enter") {
+                performSearch();
+            }
+        });
+    }
 
     // Change variable based on slider state
     const sliderInput = document.querySelector(
